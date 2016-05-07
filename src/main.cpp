@@ -40,11 +40,11 @@ int frequencyFromPotValue(int potValue) {
 void setTimerFrequency(int frequencyHz) {
   int compareValue = (CPU_HZ / (TIMER_PRESCALER_DIV * frequencyHz)) - 1;
   TcCount16* TC = (TcCount16*) TC3;
-  while (TC->STATUS.bit.SYNCBUSY == 1);
   // Make sure the count is in a proportional position to where it was
   // to prevent any jitter or disconnect when changing the compare value.
   TC->COUNT.reg = map(TC->COUNT.reg, 0, TC->CC[0].reg, 0, compareValue);
   TC->CC[0].reg = compareValue;
+  while (TC->STATUS.bit.SYNCBUSY == 1);
 }
 
 /*
@@ -53,23 +53,23 @@ https://github.com/maxbader/arduino_tools
  */
 void startTimer(int frequencyHz) {
   REG_GCLK_CLKCTRL = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID (GCM_TCC2_TC3)) ;
+  while ( GCLK->STATUS.bit.SYNCBUSY == 1 );
 
   TcCount16* TC = (TcCount16*) TC3;
 
-  while ( GCLK->STATUS.bit.SYNCBUSY == 1 );
   TC->CTRLA.reg &= ~TC_CTRLA_ENABLE;
 
   // Use the 16-bit timer
-  while (TC->STATUS.bit.SYNCBUSY == 1);
   TC->CTRLA.reg |= TC_CTRLA_MODE_COUNT16;
+  while (TC->STATUS.bit.SYNCBUSY == 1);
 
   // Use match mode so that the timer counter resets when the count matches the compare register
-  while (TC->STATUS.bit.SYNCBUSY == 1);
   TC->CTRLA.reg |= TC_CTRLA_WAVEGEN_MFRQ;
+  while (TC->STATUS.bit.SYNCBUSY == 1);
 
   // Set prescaler to 1024
-  while (TC->STATUS.bit.SYNCBUSY == 1);
   TC->CTRLA.reg |= TC_CTRLA_PRESCALER_DIV1024;
+  while (TC->STATUS.bit.SYNCBUSY == 1);
 
   setTimerFrequency(frequencyHz);
 
@@ -79,8 +79,8 @@ void startTimer(int frequencyHz) {
 
   NVIC_EnableIRQ(TC3_IRQn);
 
-  while (TC->STATUS.bit.SYNCBUSY == 1);
   TC->CTRLA.reg |= TC_CTRLA_ENABLE;
+  while (TC->STATUS.bit.SYNCBUSY == 1);
 }
 
 void TC3_Handler() {
